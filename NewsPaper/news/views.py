@@ -1,3 +1,6 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from .models import Post
@@ -35,7 +38,8 @@ class PostSearch(ListView):
         return context
 
 
-class NWCreate(CreateView):
+class NWCreate(PermissionRequiredMixin, CreateView):
+    permission_required = ('news.add_post')
     form_class = PostForm
     model = Post
     template_name = 'post_edit.html'
@@ -46,13 +50,14 @@ class NWCreate(CreateView):
         return super().form_valid(form)
 
 
-class NWUpdate(UpdateView):
+class NWUpdate(PermissionRequiredMixin, UpdateView):
+    permission_required = ('news.change_post')
     form_class = PostForm
     model = Post
     template_name = 'post_edit.html'
 
     def form_valid(self, form):
-        post = form.save(commit=True)
+        post = form.save(commit=False)
         post.choice = 'NW'
         return super().form_valid(form)
 
@@ -60,8 +65,15 @@ class NWUpdate(UpdateView):
         queryset = Post.objects.filter(choice="NW")
         return queryset
 
+    def dispatch(self, request, *args, **kwargs):
+        post = get_object_or_404(Post, id=self.kwargs['pk'])
+        if post.author.authorUser != self.request.user:
+            return HttpResponse("Доступ запрещен!")
+        return super(NWUpdate, self).dispatch(request, *args, **kwargs)
 
-class NWDelete(DeleteView):
+
+class NWDelete(PermissionRequiredMixin, DeleteView):
+    permission_required = ('news.delete_post')
     model = Post
     template_name = 'post_delete.html'
     success_url = reverse_lazy('post_list')
@@ -70,19 +82,27 @@ class NWDelete(DeleteView):
         queryset = Post.objects.filter(choice="NW")
         return queryset
 
+    def dispatch(self, request, *args, **kwargs):
+        post = get_object_or_404(Post, id=self.kwargs['pk'])
+        if post.author.authorUser != self.request.user:
+            return HttpResponse("Доступ запрещен!")
+        return super(NWDelete, self).dispatch(request, *args, **kwargs)
 
-class ARCreate(CreateView):
+
+class ARCreate(PermissionRequiredMixin, CreateView):
+    permission_required = ('news.add_post')
     form_class = PostForm
     model = Post
     template_name = 'post_edit.html'
 
     def form_valid(self, form):
-        post = form.save(commit=True)
+        post = form.save(commit=False)
         post.choice = 'AR'
         return super().form_valid(form)
 
 
-class ARUpdate(UpdateView):
+class ARUpdate(PermissionRequiredMixin, UpdateView):
+    permission_required = ('news.change_post')
     form_class = PostForm
     model = Post
     template_name = 'post_edit.html'
@@ -96,8 +116,15 @@ class ARUpdate(UpdateView):
         queryset = Post.objects.filter(choice="AR")
         return queryset
 
+    def dispatch(self, request, *args, **kwargs):
+        post = get_object_or_404(Post, id=self.kwargs['pk'])
+        if post.author.authorUser != self.request.user:
+            return HttpResponse("Доступ запрещен!")
+        return super(ARUpdate, self).dispatch(request, *args, **kwargs)
 
-class ARDelete(DeleteView):
+
+class ARDelete(PermissionRequiredMixin, DeleteView):
+    permission_required = ('news.delete_post')
     model = Post
     template_name = 'post_delete.html'
     success_url = reverse_lazy('post_list')
@@ -105,3 +132,9 @@ class ARDelete(DeleteView):
     def get_queryset(self):
         queryset = Post.objects.filter(choice="AR")
         return queryset
+
+    def dispatch(self, request, *args, **kwargs):
+        post = get_object_or_404(Post, id=self.kwargs['pk'])
+        if post.author.authorUser != self.request.user:
+            return HttpResponse("Доступ запрещен!")
+        return super(ARDelete, self).dispatch(request, *args, **kwargs)
