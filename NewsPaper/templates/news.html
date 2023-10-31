@@ -9,8 +9,7 @@ News
 
 
 {% block content %}
-<h1>Все Новости</h1>
-<h3>{{news|length}}</h3>
+<h1>Новости<small>Всего: {{news|length}}</small></h1>
 <hr>
     {% if perms.news.add_post %}
     <a href="{% url 'news_create' %}">Добавить новость</a>
